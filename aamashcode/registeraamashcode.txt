@@ -1,0 +1,149 @@
+import React from 'react';
+import {useState, useEffect} from 'react'
+import { FaUser } from 'react-icons/fa'
+//useSelecter is imported from redux we use it to bring in the current state like user,isloading,iserror and useDispatch is also from redux it is used to bring in action like reset or register function which is a action
+import { useSelector, useDispatch } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
+//React toasts are lightweight notifications designed to mimic the push notifications that have been popularized by mobile and desktop operating systems. They're built with flexbox, so they're easy to align and position.
+import { toast } from 'react-toastify'
+import authSlice, { register, reset } from '../features/auth/authSlice' //importing from features folder
+import Spinner from '../COMPONENT/Spinner';
+
+
+function Register() {
+    //chahta toh alag alag nam sa name,email sab ka alag banaleta use state lekun mana aik form data ka name sa banaka uska umbrella ma sab likh dia
+    const [formdata,setformdata]=useState({
+        name:' ',
+        email:' ',
+        password:'',
+        passwoord2:' '
+    })
+    const { name, email, password, password2 } = formdata
+    
+    const navigate=useNavigate()
+    const dispatch=useDispatch()
+    
+    //now getting state through use selector
+    const {user,isLoading,isError,isSuccess,message}=useSelector(
+      (state)=>state
+    )
+
+
+    //This is useEffect it is involved because if there is a error then wrror will turn true if there is message then it will there if user is registered then new user will be there in local storage so to minitor the constant changes in the state of the application we involved use Effect
+    useEffect(() => {
+      if (isError) {
+        toast.error(message)
+      }
+  
+      if ((isSuccess) || (user)) {
+        navigate('/')
+      }
+      //AFTER WE CECKED EVERYTHING AND NOTHING MATCHED THEN WE CALL RESET TO ERSET ALL TO FALSE
+      dispatch(reset())
+    }, [user,isLoading, isError, isSuccess, message, navigate, dispatch])
+
+    //this function runs when every the empty state changes of input when ever user type something in the input fields
+    const onChange=(e)=>{
+    setformdata((prevstate)=>({
+             ...prevstate,/*it tells that from formdata previous satate change it to setformdata state wicj is name,email etc */
+             [e.target.name]:e.target.value
+         }))
+    }
+    //FORM SUB,IT FUNCTION
+    const onSubmit=(e)=>{
+           e.preventDefault()/*The preventDefault() method cancels the event if it is cancelable, meaning that the default action that belongs to the event will not occur. For example, this can be useful when: Clicking on a "Submit" button, prevent it from submitting a form.*/
+            //in submit dunc we r checking if passowrd enter match the confirm passowrd then only register
+
+           if(password!=password2){
+              toast.error('Password do not match')
+            }
+            else{
+              const userData={
+                name,
+                email,
+                password
+              }
+              //if passowrd matches then name email and passowrd is saved in userData variable and register function is called and userdata is passed in function to register
+              dispatch(register(userData))
+            }
+        }
+        if(isLoading){
+          <Spinner/>
+        }
+       
+ return (
+ <>
+  <section className="heading">
+      <h1>
+          <FaUser/> Register
+          </h1>
+          <p>Please create an Account</p>
+  </section>
+  <section className='form'>
+        <form onSubmit={onSubmit}>
+            
+        <div className='form-group'>
+            <input
+              type='text'
+              className='form-control'
+              id='name'
+              name='name'
+              value={name}
+              placeholder='Enter your name'
+              onChange={onChange}
+            />
+            </div>
+            <div className='form-group'>
+            <input
+              type='email'
+              className='form-control'
+              id='email'
+              name='email'
+              value={email}
+              placeholder='Enter your email'
+              onChange={onChange}
+            />
+          </div>
+          <div className='form-group'>
+            <input
+              type='password'
+              className='form-control'
+              id='password'
+              name='password'
+              value={password}
+              placeholder='Enter password'
+              onChange={onChange}
+            />
+          </div>
+          <div className='form-group'>
+            <input
+              type='password'
+              className='form-control'
+              id='password2'
+              name='password2'
+              value={password2}
+              placeholder='Confirm password'
+              onChange={onChange}
+            />
+          </div>
+          <div className="form-group">
+          <button type='submit' className='btn btn-block'>
+              Submit
+            </button>
+          </div>
+        </form>
+  </section>
+  
+  </>)
+}
+
+export default Register;
+
+
+//use effect
+//hum ya jub use karta ha jab hum iski [ ] ma defined karay jab bi changes ho hamra state ma toh ya use effect as a side effect render
+//ho ya batana ka lia ka there are changes
+
+//use state
+//ya variable kis state ko badalna ka lia use hota jesa aik number  we set to 1 r aga roject ma hum usko 2 set karda toh
+//aisa ka lia hum use state use karta aha

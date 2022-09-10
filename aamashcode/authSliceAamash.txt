@@ -1,0 +1,74 @@
+//reateSlice
+// function that accepts an initial state, an object of reducer functions, and a "slice name", and automatically generates action creators and action types that correspond to the reducers and state
+//createAsyncThunk will generate three Redux action creators using createAction : pending , fulfilled , and rejected . Each lifecycle action creator will be attached to the returned thunk action creator so that your reducer logic can reference the action types and respond to the actions when dispatched.
+
+import {createSlice, createAsyncThunk} from '@reduxjs/toolkit';
+import authService from './authservice';
+
+
+//Get user from local storage
+const user=JSON.parse(localStorage.getItem('user'))//checking user in the local storage
+const intialState={
+    user:user? user:null,
+    isError:false,
+    isSuccess:false,
+    isloading:false,
+    message:'',
+}
+// /*The thunk functions can have any async logic we want inside, and that logic can dispatch actions and read the store state as needed. Writing async logic as thunk functions allows us to reuse that logic without knowing what Redux store we're using ahead of time.*/
+
+//now we are using a sync thunk function to deal with async functions in our backend
+//Register user 
+export const register=createAsyncThunk('auth/register',async(user,thunkAPI)=>{
+try{
+    return await authService.register(user)
+}
+catch(error){
+const message=(error.response && error.response.data && error.response.message || error.message|| error.toString())
+return thunkAPI.rejectWithValue(message)// if there is an error it will reject the api and sent a message of error
+}
+})
+
+
+ export const authSlice=createSlice({
+    name:'auth',
+    intialState,
+    reducers:{
+     reset:(state)=>{//to reset to intialstate after we register the user
+        state.isloading=false
+        state.isSuccess=false
+        state.isError=false
+        state.message=''
+
+     },
+    },
+    extraReducers:(builder)=>{
+      
+        /*these .add case are function for eg if register pending then show lading true etc*/
+        builder
+        .addCase(register.pending , (state)=>{
+            state.isLoading=true
+        })
+        //Registration successfull condition and its function
+        .addCase(register.fulfilled, (state,action)=>{
+            state.isLoading=false
+            state.isSuccess=true
+            state.user=action.payload
+            /*Redux data flow. Actions: Actions are a plain JavaScript object that contains information. Actions are the only source of information for the store. Actions have a type field that tells what kind of action to perform and all other fields contain information or data.*/
+
+        })
+        //Registration rejected
+        .addCase(register.rejected,(state,action)=>{
+            state.loading=false
+            state.isError=true // beacsue its rejected so there must be error
+            state.message=action.payload
+            state.user=null
+        })
+
+    }
+})
+
+export const {reset}=authSlice.actions
+export default authSlice.reducer
+
+//Reducers are functions that take the current state and an action as arguments, and return a new state result. In other words, (state, action) => newState
